@@ -78,7 +78,7 @@ const int default_genome_auxlen = 7; // for ZW:f:0.0
 //methods
 
 int ProcessBatchReads(KmerIndex& index, const ProgramOptions& opt, MinCollector& tc, std::vector<std::vector<int>> &batchCounts) {
-  int limit = 1048576; 
+  int limit = 1048576;
   std::vector<std::pair<const char*, int>> seqs;
   seqs.reserve(limit/50);
 
@@ -91,14 +91,14 @@ int ProcessBatchReads(KmerIndex& index, const ProgramOptions& opt, MinCollector&
   size_t nummapped = 0;
 
   bool paired = !opt.single_end;
-  
+
   if (paired) {
     std::cerr << "[quant] running in paired-end mode" << std::endl;
   } else {
     std::cerr << "[quant] running in single-end mode" << std::endl;
   }
 
-  for (const auto& fs : opt.batch_files) { 
+  for (const auto& fs : opt.batch_files) {
     for (int i = 0; i < fs.size(); i += (paired) ? 2 : 1) {
       if (paired) {
         std::cerr << "[quant] will process pair " << (i/2 +1) << ": "  << fs[i] << std::endl
@@ -108,9 +108,9 @@ int ProcessBatchReads(KmerIndex& index, const ProgramOptions& opt, MinCollector&
       }
     }
   }
-  
+
   std::cerr << "[quant] finding pseudoalignments for all files ..."; std::cerr.flush();
-  
+
   Transcriptome model;
   MasterProcessor MP(index, opt, tc, model);
   MP.processReads();
@@ -136,7 +136,7 @@ int ProcessBatchReads(KmerIndex& index, const ProgramOptions& opt, MinCollector&
   }
 
   return numreads;
-  
+
 
 }
 
@@ -180,7 +180,7 @@ int ProcessReads(MasterProcessor& MP, const  ProgramOptions& opt) {
     index.writePseudoBamHeader(std::cout);
   }*/
 
-  
+
   MP.processReads();
   numreads = MP.numreads;
   nummapped = MP.nummapped;
@@ -198,7 +198,7 @@ int ProcessReads(MasterProcessor& MP, const  ProgramOptions& opt) {
     std::cerr << "[~warn] no reads pseudoaligned." << std::endl;
   }
 
-  
+
 
   /*
   for (int i = 0; i < 4096; i++) {
@@ -223,7 +223,7 @@ int ProcessReads(MasterProcessor& MP, const  ProgramOptions& opt) {
 /** -- read processors -- **/
 
 void MasterProcessor::processReads() {
-  
+
 
   // start worker threads
   if (!opt.batch_mode) {
@@ -231,7 +231,7 @@ void MasterProcessor::processReads() {
     for (int i = 0; i < opt.threads; i++) {
       workers.emplace_back(std::thread(ReadProcessor(index,opt,tc,*this)));
     }
-    
+
     // let the workers do their thing
     for (int i = 0; i < opt.threads; i++) {
       workers[i].join(); //wait for them to finish
@@ -259,11 +259,11 @@ void MasterProcessor::processReads() {
       for (int i = 0; i < nt; i++,id++) {
         workers.emplace_back(std::thread(ReadProcessor(index, opt, tc, *this, id)));
       }
-      
+
       for (int i = 0; i < nt; i++) {
         workers[i].join();
       }
-      
+
       if (opt.umi) {
         // process the regular EC umi now
         for (int i = 0; i < nt; i++) {
@@ -284,21 +284,21 @@ void MasterProcessor::processReads() {
         }
       }
     }
-    
+
     int num_newEcs = 0;
-    if (!opt.umi) {      
+    if (!opt.umi) {
       // for each cell
       for (int id = 0; id < num_ids; id++) {
         // for each new ec
         for (auto &t : newBatchECcount[id]) {
           // add the ec and count number of new ecs
           if (t.second <= 0) {
-            continue;          
+            continue;
           }
           int ecsize = index.ecmap.size();
           int ec = tc.increaseCount(t.first);
-          if (ec != -1 && ecsize < index.ecmap.size()) {          
-            num_newEcs++; 
+          if (ec != -1 && ecsize < index.ecmap.size()) {
+            num_newEcs++;
           }
         }
       }
@@ -327,7 +327,7 @@ void MasterProcessor::processReads() {
           int ecsize = index.ecmap.size();
           int ec = tc.increaseCount(t.first);
           if (ec != -1 && ecsize < index.ecmap.size()) {
-            num_newEcs++;  
+            num_newEcs++;
           }
         }
       }
@@ -339,7 +339,7 @@ void MasterProcessor::processReads() {
         umis.reserve(newBatchECumis[id].size());
         // for each new ec
         for (auto &t : newBatchECumis[id]) {
-          // record the ec,umi          
+          // record the ec,umi
           int ec = tc.findEC(t.first);
           umis.push_back({ec, std::move(t.second)});
         }
@@ -356,7 +356,7 @@ void MasterProcessor::processReads() {
         }
         for (auto x : c) {
           num_umi += x;
-        }        
+        }
       }
     }
   }
@@ -382,9 +382,9 @@ void MasterProcessor::processAln(const EMAlgorithm& em, bool useEM = true) {
     } else {
       bamh = createPseudoBamHeaderTrans(index);
       bamfp = sam_open(bamfn.c_str(), "wb");
-      int r = sam_hdr_write(bamfp, bamh);    
+      int r = sam_hdr_write(bamfp, bamh);
     }
-    
+
     if (opt.threads > 1 && !opt.genomebam) {
       // makes no sens to use threads on unsorted bams
       hts_set_threads(bamfp, opt.threads);
@@ -394,7 +394,7 @@ void MasterProcessor::processAln(const EMAlgorithm& em, bool useEM = true) {
 
   // figure out where to place breakpoints!
   breakpoints.clear();
-  breakpoints.assign(numSortFiles -1 , (((uint64_t)-1)<<32));  
+  breakpoints.assign(numSortFiles -1 , (((uint64_t)-1)<<32));
   std::vector<std::vector<std::pair<uint32_t, uint32_t>>> chrWeights(model.chr.size());
   for (const auto& t : model.transcripts) {
     if (t.id >= 0 && t.id < index.num_trans) {
@@ -411,10 +411,10 @@ void MasterProcessor::processAln(const EMAlgorithm& em, bool useEM = true) {
       sum += p.second;
     }
   }
-  
+
   double bpLimit = sum / (numSortFiles-1);
 
-  // place breakpoints on evenly spaced   
+  // place breakpoints on evenly spaced
   for (auto& chrw : chrWeights) {
     // sort each by stop point
     std::sort(chrw.begin(), chrw.end(), [](std::pair<uint32_t, uint32_t> a, std::pair<uint32_t, uint32_t> b) { return a.first < b.first;});
@@ -462,7 +462,7 @@ void MasterProcessor::processAln(const EMAlgorithm& em, bool useEM = true) {
   for (int i = 0; i < opt.threads; i++) {
     workers.emplace_back(std::thread(AlnProcessor(index,opt,*this, em, model, useEM)));
   }
-  
+
   // let the workers do their thing
   for (int i = 0; i < opt.threads; i++) {
     workers[i].join(); //wait for them to finish
@@ -491,7 +491,7 @@ void MasterProcessor::processAln(const EMAlgorithm& em, bool useEM = true) {
     int ret;
     std::vector<bam1_t> bv;
     std::vector<std::pair<uint64_t, uint64_t>> bb;
-    bam1_t b;  
+    bam1_t b;
     int tid;
     BGZF* ofp = bamfp->fp.bgzf;
     for (int i = 0; i < numSortFiles; i++) {
@@ -504,12 +504,12 @@ void MasterProcessor::processAln(const EMAlgorithm& em, bool useEM = true) {
 
       // init
       memset(&b, 0, sizeof(b));
-      
+
       if (i < numSortFiles-1) {
         // sort the vector
-        while ((ret = bam_read1(bamfps[i]->fp.bgzf, &b)) >= 0) {        
-          bv.push_back(b);  
-          memset(&b, 0, sizeof(b));        
+        while ((ret = bam_read1(bamfps[i]->fp.bgzf, &b)) >= 0) {
+          bv.push_back(b);
+          memset(&b, 0, sizeof(b));
         }
 
         sam_close(bamfps[i]);
@@ -518,27 +518,27 @@ void MasterProcessor::processAln(const EMAlgorithm& em, bool useEM = true) {
 
         uint64_t n = bv.size();
         for (uint64_t j = 0; j < n; j++) {
-          b = bv[j];          
+          b = bv[j];
           uint64_t pos = ((uint64_t) b.core.tid) << 32 | ((uint64_t) b.core.pos+1) << 1 | (b.core.flag & BAM_FREVERSE) >>4;
           bb.push_back({pos,j});
         }
-        
+
         std::sort(bb.begin(), bb.end(), [](std::pair<uint64_t, uint64_t> a, std::pair<uint64_t, uint64_t> b) {return a.first < b.first;});
 
         for (auto &x : bb) {
-          b = bv[x.second];           
-          ret = bam_write1(ofp, &b);               
+          b = bv[x.second];
+          ret = bam_write1(ofp, &b);
           free(bv[x.second].data);
           bv[x.second].l_data = 0;
           bv[x.second].m_data = 0;
-          
+
         }
       } else {
         // for unsorted files, just copy directly
         memset(&b, 0, sizeof(b));
-        while ((ret = bam_read1(bamfps[i]->fp.bgzf, &b)) >= 0) {        
+        while ((ret = bam_read1(bamfps[i]->fp.bgzf, &b)) >= 0) {
           ret = bam_write1(ofp, &b);
-        }  
+        }
         sam_close(bamfps[i]);
         bamfps[i] = nullptr;
         remove(tmpFileName.c_str());
@@ -546,10 +546,10 @@ void MasterProcessor::processAln(const EMAlgorithm& em, bool useEM = true) {
     }
 
     sam_close(bamfp);
-    bamfp = nullptr;    
+    bamfp = nullptr;
     std::cerr << "done" << std::endl;
     // if we are multithreaded we need to construct the index last
-    
+
     std::cerr << "[  bam] indexing BAM file .. "; std::cerr.flush();
 
     ret = sam_index_build3(bamfn.c_str(), (bamfn+".bai").c_str(), 0, opt.threads);
@@ -557,12 +557,12 @@ void MasterProcessor::processAln(const EMAlgorithm& em, bool useEM = true) {
       std::cerr << " invalid return code when indexing file " << ret << " .. ";
     }
     std::cerr << "done" << std::endl;
-    
+
   }
 }
 
-void MasterProcessor::update(const std::vector<int>& c, const std::vector<std::vector<int> > &newEcs, 
-                            std::vector<std::pair<int, std::string>>& ec_umi, std::vector<std::pair<std::vector<int>, std::string>> &new_ec_umi, 
+void MasterProcessor::update(const std::vector<int>& c, const std::vector<std::vector<int> > &newEcs,
+                            std::vector<std::pair<int, std::string>>& ec_umi, std::vector<std::pair<std::vector<int>, std::string>> &new_ec_umi,
                             int n, std::vector<int>& flens, std::vector<int> &bias, const PseudoAlignmentBatch& pseudobatch, int id) {
   // acquire the writer lock
   std::lock_guard<std::mutex> lock(this->writer_lock);
@@ -582,7 +582,7 @@ void MasterProcessor::update(const std::vector<int>& c, const std::vector<std::v
       for (auto &t : ec_umi) {
         batchUmis[id].push_back(std::move(t));
       }
-    }    
+    }
   }
 
   if (!opt.batch_mode) {
@@ -605,8 +605,8 @@ void MasterProcessor::update(const std::vector<int>& c, const std::vector<std::v
   } else {
     nummapped += new_ec_umi.size();
   }
-  
-  
+
+
 
   if (!flens.empty()) {
     int local_tlencount = 0;
@@ -634,17 +634,17 @@ void MasterProcessor::update(const std::vector<int>& c, const std::vector<std::v
         break;
       }
       // find the smallest batch id
-      auto min_it = std::min_element(pseudobatch_stragglers.begin(), pseudobatch_stragglers.end(), 
+      auto min_it = std::min_element(pseudobatch_stragglers.begin(), pseudobatch_stragglers.end(),
       [](const PseudoAlignmentBatch &p1, const PseudoAlignmentBatch &p2) -> bool {
         return p1.batch_id < p2.batch_id;
-      });      
+      });
       if ((last_pseudobatch_id + 1) != min_it->batch_id) {
         break;
       }
       // if it is in sequence, write it out
       writePseudoAlignmentBatch(pseudobatchf_out, *min_it);
       // remove from processing
-      pseudobatch_stragglers.erase(min_it); 
+      pseudobatch_stragglers.erase(min_it);
       last_pseudobatch_id += 1;
     }
   }
@@ -659,12 +659,12 @@ void MasterProcessor::writePseudoBam(const std::vector<bam1_t> &bv) {
   //kstring_t str = { 0, 0, NULL };
   for (const auto &b : bv) {
     /*
-    std::cout << "name: " <<  b.data << ", ldata:" << (int)b.l_data << " ,mdata: " << (int) b.m_data  
+    std::cout << "name: " <<  b.data << ", ldata:" << (int)b.l_data << " ,mdata: " << (int) b.m_data
       <<  ", lqname " << (int) b.core.l_qname <<", lqseq " <<  (int) b.core.l_qseq << ", enull " << (int) b.core.l_extranul << std::endl;
-    for (int i = 0; i < b.l_data; ++i) {      
+    for (int i = 0; i < b.l_data; ++i) {
       std::cout << (int) b.data[i] << " ";
     }
-    std::cout << std::endl;    
+    std::cout << std::endl;
     std::cout << "tid: " << b.core.tid << ", pos: " << (int) b.core.pos
               << ", flag: " << b.core.flag << ", ncigar: " << b.core.n_cigar << ", mtid: " <<(int) b.core.mtid << ", mpos: " << (int) b.core.mpos << ", isize" << (int) b.core.isize <<  std::endl;
     kstring_t str = { 0, 0, NULL };
@@ -672,14 +672,14 @@ void MasterProcessor::writePseudoBam(const std::vector<bam1_t> &bv) {
     kputc('\n', &str);
     std::cout << str.s << std::endl;
     */
-    int r = sam_write1(bamfp, bamh, &b);    
-  } 
+    int r = sam_write1(bamfp, bamh, &b);
+  }
 }
 
-// bvv needs to be sorted according to MasterProcessor::bucketSplits. 
-void MasterProcessor::writeSortedPseudobam(const std::vector<std::vector<bam1_t>> &bvv) { 
+// bvv needs to be sorted according to MasterProcessor::bucketSplits.
+void MasterProcessor::writeSortedPseudobam(const std::vector<std::vector<bam1_t>> &bvv) {
   assert(bvv.size() == numSortFiles);
-  
+
   for (int i = 0; i < numSortFiles; i++) {
     std::lock_guard<std::mutex> lock(this->writer_lock);
     for (const auto &b : bvv[i]) {
@@ -783,7 +783,7 @@ void ReadProcessor::operator()() {
 }
 
 void ReadProcessor::processBuffer() {
-  // set up thread variables  
+  // set up thread variables
   std::vector<std::pair<KmerEntry,int>> v1, v2;
   std::vector<int> vtmp;
   std::vector<int> u;
@@ -901,7 +901,7 @@ void ReadProcessor::processBuffer() {
         u = vtmp; // copy
       }
     }
-    
+
     if (mp.opt.strand_specific && !u.empty()) {
       int p = -1;
       Kmer km;
@@ -918,18 +918,18 @@ void ReadProcessor::processBuffer() {
           for (auto ctx : c.transcripts) {
             if (tr == ctx.trid) {
               if ((strand == ctx.sense) == firstStrand) {
-                // swap out 
+                // swap out
                 vtmp.push_back(tr);
-              } 
+              }
               break;
             }
-          }          
+          }
         }
         if (vtmp.size() < u.size()) {
           u = vtmp; // copy
         }
       }
-      
+
       if (!v2.empty()) {
         vtmp.clear();
         bool secondStrand = (mp.opt.strand == ProgramOptions::StrandType::RF);
@@ -942,12 +942,12 @@ void ReadProcessor::processBuffer() {
           for (auto ctx : c.transcripts) {
             if (tr == ctx.trid) {
               if ((strand == ctx.sense) == secondStrand) {
-                // swap out 
+                // swap out
                 vtmp.push_back(tr);
-              } 
+              }
               break;
             }
-          }          
+          }
         }
         if (vtmp.size() < u.size()) {
           u = vtmp; // copy
@@ -968,9 +968,9 @@ void ReadProcessor::processBuffer() {
           // add to count vector
           ++counts[ec];
         }
-      } else {       
+      } else {
         if (ec == -1 || ec >= counts.size()) {
-          new_ec_umi.emplace_back(u, std::move(umis[i]));          
+          new_ec_umi.emplace_back(u, std::move(umis[i]));
         } else {
           ec_umi.emplace_back(ec, std::move(umis[i]));
         }
@@ -997,7 +997,7 @@ void ReadProcessor::processBuffer() {
     }
 
     // pseudobam
-    
+
     if (mp.opt.pseudobam) {
       PseudoAlignmentInfo info;
       info.id = (paired) ? (i/2) : i; // read id
@@ -1008,8 +1008,10 @@ void ReadProcessor::processBuffer() {
         KmerEntry val;
         info.k1pos = (!info.r1empty) ? findFirstMappingKmer(v1,val) : -1;
         info.k2pos = (!info.r2empty) ? findFirstMappingKmer(v2,val) : -1;
-        
-        
+        std::cerr << "This read matched " << v1.size() << " kmers" << std::endl;
+        info.num_kmers_read1 = v1.size();
+
+
         if (ec != -1) {
           info.ec_id = ec;
         } else {
@@ -1032,7 +1034,7 @@ void ReadProcessor::processBuffer() {
       }
       */
     }
-    
+
 
 
 
@@ -1078,9 +1080,9 @@ AlnProcessor::AlnProcessor(const KmerIndex& index, const ProgramOptions& opt, Ma
    if (opt.umi) {
     umis.reserve(bufsize/50);
    }
-   
+
    clear();
-   
+
 }
 
 
@@ -1187,7 +1189,7 @@ void AlnProcessor::processBufferTrans() {
   if (!useEM) {
     trans_auxlen -= 7;
   }
-  
+
 
   Kmer km1,km2;
   KmerEntry val1, val2;
@@ -1201,7 +1203,7 @@ void AlnProcessor::processBufferTrans() {
     if (paired) {
       rlen2 = seqs[si2].second;
     }
-    
+
     // fill in the bam core info
     b1.core.tid = -1;
     b1.core.pos = -1;
@@ -1220,7 +1222,7 @@ void AlnProcessor::processBufferTrans() {
       b2.core.pos = -1;
       b2.core.bin = 4680; // magic bin for unmapped reads
       b2.core.qual = 0;
-      b2.core.flag = BAM_FPAIRED | BAM_FREAD2 | BAM_FUNMAP | BAM_FMUNMAP;      
+      b2.core.flag = BAM_FPAIRED | BAM_FREAD2 | BAM_FUNMAP | BAM_FMUNMAP;
       b2.core.mtid = -1;
       b2.core.mpos = -1;
       b2.core.isize = 0;
@@ -1234,9 +1236,9 @@ void AlnProcessor::processBufferTrans() {
       fillBamRecord(b2, nullptr, seqs[si2].first, names[si2].first,  quals[si2].first, seqs[si2].second, names[si2].second, pi.r2empty, trans_auxlen);
     }
 
-    if (pi.r1empty && pi.r2empty) {      
+    if (pi.r1empty && pi.r2empty) {
       bv.push_back(b1);
-      if (paired) {      
+      if (paired) {
         bv.push_back(b2);
       }
     } else {
@@ -1339,6 +1341,8 @@ void AlnProcessor::processBufferTrans() {
           memcpy(b1.data + b1.l_data + 3, &zero, 4);
           b1.l_data += 7;
         }
+
+        //NOTE: Ben to fix here.
 
         if (paired) {
           assert(b2.l_data + trans_auxlen <= b2.m_data);

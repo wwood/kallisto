@@ -31,7 +31,8 @@ struct PseudoAlignmentInfo {
   int k2pos;
   int32_t ec_id;
   std::vector<int32_t> u;
-  PseudoAlignmentInfo() : id(-1), r1empty (true), r2empty(true), paired(true), k1pos(-1), k2pos(-1), ec_id(-1) {}
+  PseudoAlignmentInfo() : id(-1), r1empty (true), r2empty(true), paired(true), k1pos(-1), k2pos(-1), ec_id(-1), num_kmers_read1(-1) {}
+  int num_kmers_read1;
 };
 
 

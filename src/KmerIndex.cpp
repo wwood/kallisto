@@ -79,7 +79,7 @@ void KmerIndex::BuildTranscripts(const ProgramOptions& opt) {
 
   std::vector<std::string> seqs;
 
-  // read fasta file  
+  // read fasta file
   gzFile fp = 0;
   kseq_t *seq;
   int l = 0;
@@ -121,7 +121,7 @@ void KmerIndex::BuildTranscripts(const ProgramOptions& opt) {
         str = str.substr(0,j+1);
       }
 
-    
+
       target_lens_.push_back(seq->seq.l);
       std::string name(seq->name.s);
       size_t p = name.find(' ');
@@ -155,16 +155,16 @@ void KmerIndex::BuildTranscripts(const ProgramOptions& opt) {
     std::cerr << "[build] warning: clipped off poly-A tail (longer than 10)" << std::endl << "        from " << polyAcount << " target sequences" << std::endl;
   }
 
-  
+
   if (countNonNucl > 0) {
     std::cerr << "[build] warning: replaced " << countNonNucl << " non-ACGUT characters in the input sequence" << std::endl << "        with pseudorandom nucleotides" << std::endl;
   }
   if (countUNuc > 0) {
     std::cerr << "[build] warning: replaced " << countUNuc << " U characters with Ts" << std::endl;
   }
-  
+
   num_trans = seqs.size();
-  
+
   // for each target, create it's own equivalence class
   for (int i = 0; i < seqs.size(); i++ ) {
     std::vector<int> single(1,i);
@@ -172,7 +172,7 @@ void KmerIndex::BuildTranscripts(const ProgramOptions& opt) {
     ecmap.push_back(single);
     ecmapinv.insert({single,i});
   }
-  
+
   BuildDeBruijnGraph(opt, seqs);
   BuildEquivalenceClasses(opt, seqs);
   //BuildEdges(opt);
@@ -180,7 +180,7 @@ void KmerIndex::BuildTranscripts(const ProgramOptions& opt) {
 }
 
 void KmerIndex::BuildDeBruijnGraph(const ProgramOptions& opt, const std::vector<std::string>& seqs) {
-  
+
 
   std::cerr << "[build] counting k-mers ... "; std::cerr.flush();
   // gather all k-mers
@@ -194,7 +194,7 @@ void KmerIndex::BuildDeBruijnGraph(const ProgramOptions& opt, const std::vector<
     }
   }
   std::cerr << "done." << std::endl;
-  
+
   std::cerr << "[build] building target de Bruijn graph ... "; std::cerr.flush();
   // find out how much we can skip ahead for each k-mer.
   for (auto& kv : kmap) {
@@ -276,7 +276,7 @@ void KmerIndex::BuildDeBruijnGraph(const ProgramOptions& opt, const std::vector<
           contig.seq.push_back(x.toString()[k-1]);
         }
       }
-      
+
       dbGraph.contigs.push_back(contig);
       dbGraph.ecs.push_back(-1);
     }
@@ -304,7 +304,7 @@ void KmerIndex::BuildEquivalenceClasses(const ProgramOptions& opt, const std::ve
       std::vector<TRInfo>& trinfo = trinfos[val.contig];
       Contig& contig = dbGraph.contigs[val.contig];
 
-      
+
 
       TRInfo tr;
       tr.trid = i;
@@ -349,16 +349,16 @@ void KmerIndex::BuildEquivalenceClasses(const ProgramOptions& opt, const std::ve
       // }
 
       // // <-- debugging
-      
+
       trinfo.push_back(tr);
       kit.jumpTo(jump);
     }
   }
 
-  
+
   FixSplitContigs(opt, trinfos);
 
-  
+
   int perftr = 0;
   for (int i = 0; i < trinfos.size(); i++) {
     bool all = true;
@@ -374,7 +374,7 @@ void KmerIndex::BuildEquivalenceClasses(const ProgramOptions& opt, const std::ve
     //std::cout << std::endl;
     if (all) {
       perftr++;
-    } 
+    }
   }
   //std::cerr << "For " << dbGraph.contigs.size() << ", " << (dbGraph.contigs.size() - perftr) << " of them need to be split" << std::endl;
   // need to create the equivalence classes
@@ -406,7 +406,7 @@ void KmerIndex::BuildEquivalenceClasses(const ProgramOptions& opt, const std::ve
     }
     dbGraph.ecs[i] = ec;
     assert(ec != -1);
-    
+
     // record the transc
     Contig& contig = dbGraph.contigs[i];
     contig.ec = ec;
@@ -483,7 +483,7 @@ void KmerIndex::BuildEquivalenceClasses(const ProgramOptions& opt, const std::ve
       // }
 
       // // <-- debugging
-      
+
       kit.jumpTo(jump);
     }
     if (seqlen > 0 && seqs[i] != stmp) {
@@ -491,7 +491,7 @@ void KmerIndex::BuildEquivalenceClasses(const ProgramOptions& opt, const std::ve
                 << seqs[i] << std::endl
                 << stmp << std::endl;*/
       assert(false);
-      
+
     }
   }
 
@@ -508,14 +508,14 @@ void KmerIndex::BuildEquivalenceClasses(const ProgramOptions& opt, const std::ve
     }
   }
 
-  
+
   std::cerr << " done" << std::endl;
   std::cerr << "[build] target de Bruijn graph has " << dbGraph.contigs.size() << " contigs and contains "  << kmap.size() << " k-mers " << std::endl;
 
 
-  
 
-  
+
+
 }
 
 void KmerIndex::FixSplitContigs(const ProgramOptions& opt, std::vector<std::vector<TRInfo>>& trinfos) {
@@ -558,12 +558,12 @@ void KmerIndex::FixSplitContigs(const ProgramOptions& opt, std::vector<std::vect
       }
 
       assert(!brpoints.empty());
-      
+
       // copy sequence
       std::string seq = dbGraph.contigs[i].seq;
       // copy old trinfo
       std::vector<TRInfo> oldtrinfo = trinfos[i];
-      
+
       for (int j = 1; j < brpoints.size(); j++) {
         assert(brpoints[j-1] < brpoints[j]);
         Contig newc;
@@ -614,7 +614,7 @@ void KmerIndex::FixSplitContigs(const ProgramOptions& opt, std::vector<std::vect
 
   //std::cerr << "For " << dbGraph.contigs.size() << ", " << (dbGraph.contigs.size() - perftr) << " of them need to be split" << std::endl;
 
-  
+
 }
 
 
@@ -718,7 +718,7 @@ void KmerIndex::write(const std::string& index_out, bool writeKmerTable) {
         out.write((char*)&info.sense, sizeof(info.sense));
       }
     }
-    
+
     // 11. write out ecs info
     for (auto ec : dbGraph.ecs) {
       out.write((char*)&ec, sizeof(ec));
@@ -730,7 +730,7 @@ void KmerIndex::write(const std::string& index_out, bool writeKmerTable) {
     tmp_size = 0;
     out.write((char*)&tmp_size, sizeof(tmp_size));
   }
-  
+
 
   out.flush();
   out.close();
@@ -905,8 +905,8 @@ void KmerIndex::load(ProgramOptions& opt, bool loadKmerTable) {
       bufsz = 2*(tmp_size+1);
       buffer = new char[bufsz];
     }
-    
-    // clear the buffer 
+
+    // clear the buffer
     memset(buffer,0,bufsz);
     // 9.2 read in the character string
     in.read(buffer, tmp_size);
@@ -936,7 +936,7 @@ void KmerIndex::load(ProgramOptions& opt, bool loadKmerTable) {
     memset(buffer,0,bufsz);
     in.read(buffer, tmp_size);
     c.seq = std::string(buffer); // copy
-    
+
     // 10.1 read transcript info
     in.read((char*)&tmp_size, sizeof(tmp_size));
     c.transcripts.clear();
@@ -965,7 +965,7 @@ void KmerIndex::load(ProgramOptions& opt, bool loadKmerTable) {
   // delete the buffer
   delete[] buffer;
   buffer=nullptr;
-  
+
   in.close();
 }
 
@@ -1007,7 +1007,7 @@ int KmerIndex::mapPair(const char *s1, int l1, const char *s2, int l2, int ec) c
     return -1;
   }
 
-  
+
 
   KmerIterator kit2(s2);
   bool found2 = false;
@@ -1056,7 +1056,8 @@ int KmerIndex::mapPair(const char *s1, int l1, const char *s2, int l2, int ec) c
 
 // use:  match(s,l,v)
 // pre:  v is initialized
-// post: v contains all equiv classes for the k-mers in s
+// post: v contains all equiv classes for the k-mers in s NOTE: Wrong? Seems to
+// contain pairs of (found KmerEntry object plus position of that kmer in the read)
 void KmerIndex::match(const char *s, int l, std::vector<std::pair<KmerEntry, int>>& v) const {
   KmerIterator kit(s), kit_end;
   bool backOff = false;
@@ -1066,10 +1067,10 @@ void KmerIndex::match(const char *s, int l, std::vector<std::pair<KmerEntry, int
     auto search = kmap.find(kit->first.rep());
     int pos = kit->second;
 
-    if (search != kmap.end()) {
-
+    if (search != kmap.end()) { // NOTE: If the first kmer is not found, then
+                                // the entire read is ignored - bad for us.
       KmerEntry val = search->second;
-      
+
       v.push_back({val, kit->second});
 
       // see if we can skip ahead
@@ -1091,13 +1092,13 @@ void KmerIndex::match(const char *s, int l, std::vector<std::pair<KmerEntry, int
         // check next position
         KmerIterator kit2(kit);
         kit2.jumpTo(nextPos);
-        if (kit2 != kit_end) {
+        if (kit2 != kit_end) { // Ben: ???
           Kmer rep2 = kit2->first.rep();
           auto search2 = kmap.find(rep2);
           bool found2 = false;
           int  found2pos = pos+dist;
           if (search2 == kmap.end()) {
-            found2=true;
+            found2=true; // NOTE: Not found, instead assumed to be noise. Bad for us?
             found2pos = pos;
           } else if (val.contig == search2->second.contig) {
             found2=true;
@@ -1106,7 +1107,7 @@ void KmerIndex::match(const char *s, int l, std::vector<std::pair<KmerEntry, int
           if (found2) {
             // great, a match (or nothing) see if we can move the k-mer forward
             if (found2pos >= l-k) {
-              v.push_back({val, l-k}); // push back a fake position
+              v.push_back({val, l-k}); // push back a fake position // NOTE: Need better sanity check here?
               break; //
             } else {
               v.push_back({val, found2pos});
@@ -1142,7 +1143,7 @@ void KmerIndex::match(const char *s, int l, std::vector<std::pair<KmerEntry, int
                   if (nextPos >= l-k) {
                     break;
                   } else {
-                    kit = kit2; 
+                    kit = kit2;
                   }
                 }
               }
@@ -1264,7 +1265,7 @@ bool KmerIndex::matchEnd(const char *s, int l, std::vector<std::pair<int,int>> &
     bool forward = (kit->first == search->first);
     int dist = val.getDist(forward);
     int pos = maxPos + dist + 1; // move 1 past the end of the contig
-    
+
     const char* sLeft = s + pos + (k-1);
     int sizeleft = l -  (pos + k-1); // characters left in sleft
     if (sizeleft <= 0) {
@@ -1281,7 +1282,7 @@ bool KmerIndex::matchEnd(const char *s, int l, std::vector<std::pair<int,int>> &
       end = Kmer(root.seq.c_str()).twin();
     }
 
-    
+
     int bestContig = -1;
     int bestDist = sizeleft;
     int numBest = 0;
@@ -1368,7 +1369,7 @@ void KmerIndex::loadTranscriptSequences() const {
   }
 
 
-  
+
   std::vector<std::vector<std::pair<int, ContigToTranscript>>> trans_contigs(num_trans);
   for (auto &c : dbGraph.contigs) {
     for (auto &ct : c.transcripts) {
@@ -1377,7 +1378,7 @@ void KmerIndex::loadTranscriptSequences() const {
   }
 
   auto &target_seqs = const_cast<std::vector<std::string>&>(target_seqs_);
-  
+
   for (int i = 0; i < trans_contigs.size(); i++) {
     auto &v = trans_contigs[i];
     std::sort(v.begin(), v.end(), [](std::pair<int,ContigToTranscript> a, std::pair<int,ContigToTranscript> b) {
@@ -1414,7 +1415,7 @@ void KmerIndex::clear() {
     std::unordered_map<std::vector<int>, int, SortedVectorHasher> empty;
     std::swap(ecmapinv, empty);
   }
-  
+
   target_lens_.resize(0);
   target_names_.resize(0);
   target_seqs_.resize(0);
